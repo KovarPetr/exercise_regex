@@ -1,20 +1,39 @@
 import re
 
-log_lines = [
-    "2024-01-15 10:02:11 INFO Server started on port 8080",
-    "2024-01-15 10:03:47 ERROR Failed to connect to database",
-    "2024-01-16 08:15:00 WARNING Disk usage at 85%",
-    "2024-01-16 14:22:39 ERROR Timeout while fetching https://example.com/api",
-    "2024-01-17 09:00:05 INFO User admin logged in from 192.168.1.10",
-    "2024-01-17 11:41:18 DEBUG Cache cleared successfully",
-    "2024-01-18 03:12:56 ERROR Connection refused from 192.168.1.55",
-    "2024-01-18 23:59:02 INFO Backup completed in 42s",
-]
 
-print([line for line in log_lines if re.search("2024-01-16", line)])
-print([line for line in log_lines if re.search("WARNING|ERROR", line)])
-print([line for line in log_lines if re.search("(\d{1,3}\.){3}\d{1,3}", line)])
-print([line for line in log_lines if re.search("\d+s$", line)])
-print([line for line in log_lines if re.search("http://|https://", line)])
+def reverse_complement(seq):
+    dict = {"A":"T", "T":"A","C":"G", "G":"C"}
+    complement = ""
+    for letter in seq:
+        complement += dict[letter]
+    return complement[::-1]
 
 
+class SequencingRead:
+
+    def __init__(self, read_id, sequence):
+        self.read_id = read_id
+        self.sequence = sequence
+
+    def matches_mid_pair(self, forward_mid, reverse_mid):
+        if re.search("^" + forward_mid + ".+" + reverse_complement(reverse_mid), self.sequence):
+            return True
+        else:
+            return False
+
+    def describe(self):
+        return f"SequencingRead {self.read_id} ({len(self.sequence)} bp)"
+
+    def trim_mid_pair(self, forward_mid, reverse_mid):
+        if self.matches_mid_pair(forward_mid, reverse_mid):
+            no_for = re.sub(forward_mid, "", self.sequence)
+            return re.sub(reverse_complement(reverse_mid), "", no_for)
+        else:
+            return None
+
+
+r1 = SequencingRead("demo_1", "AGCTTCGA" + "N" * 20 + reverse_complement("TGCAGGTC"))
+print(r1.describe())
+print(r1.matches_mid_pair("AGCTTCGA", "TGCAGGTC"))  # True
+print(r1.matches_mid_pair("CGATCGAT", "GCTAGCTA"))  # False
+print(r1.trim_mid_pair("AGCTTCGA", "TGCAGGTC"))     # 20 x "N"
