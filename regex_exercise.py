@@ -16,7 +16,7 @@ class SequencingRead:
         self.sequence = sequence
 
     def matches_mid_pair(self, forward_mid, reverse_mid):
-        if re.search("^" + forward_mid + ".+" + reverse_complement(reverse_mid), self.sequence):
+        if re.search("^" + forward_mid + ".+" + reverse_complement(reverse_mid) + "$", self.sequence):
             return True
         else:
             return False
